@@ -231,7 +231,8 @@ const IN_CLAUDE_PREVIEW =
   /(\.|^)(claude\.ai|claudeusercontent\.com|anthropic\.com)$/.test(window.location.hostname || "");
 
 const DIRECT_API_URL = "https://api.anthropic.com/v1/messages";
-const PROXY_API_URL = "/api/generate"; // 배포 시 Node 프록시 서버 엔드포인트
+const PROXY_API_URL =
+  "https://labmate-ai-production.up.railway.app/api/generate"; // 배포 시 Node 프록시 서버 엔드포인트
 const MODEL = "claude-sonnet-4-20250514";
 const REQUEST_TIMEOUT_MS = 60000;
 
