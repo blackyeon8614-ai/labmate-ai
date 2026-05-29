@@ -224,21 +224,14 @@ const SECTIONS = [
 
 const KEYS = ["purpose", "theory", "resultAnalysis", "errorCauses", "discussion", "conclusion"];
 
-// 실행 환경 감지: Claude 채팅 미리보기 안에서는 api.anthropic.com 직접 호출이 동작하지만,
-// 로컬/배포 환경에서는 CORS·인증 때문에 막히므로 프록시 서버(/api/generate)를 경유한다.
-const IN_CLAUDE_PREVIEW =
-  typeof window !== "undefined" &&
-  /(\.|^)(claude\.ai|claudeusercontent\.com|anthropic\.com)$/.test(window.location.hostname || "");
-
-const DIRECT_API_URL = "https://api.anthropic.com/v1/messages";
-const PROXY_API_URL =
-  "https://labmate-ai-production.up.railway.app/api/generate"; // 배포 시 Node 프록시 서버 엔드포인트
+// 백엔드 프록시 서버(Render)로만 요청을 보낸다.
+const PROXY_API_URL = "https://labmate-ai-wdwy.onrender.com/api/generate";
 const MODEL = "claude-sonnet-4-20250514";
 const REQUEST_TIMEOUT_MS = 60000;
 
 // 타임아웃이 있는 fetch
 async function fetchWithTimeout(url, options, timeout = REQUEST_TIMEOUT_MS) {
-  const controller = new AbortController();
+  const PROXY_API_URL = "https://labmate-ai-wdwy.onrender.com/api/generate";
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
     return await fetch(url, { ...options, signal: controller.signal });
@@ -415,9 +408,8 @@ ${valuesText}
 
       const payload = { model: MODEL, max_tokens: 4000, messages: [{ role: "user", content }] };
 
-      // 환경에 따라 호출 대상 분기: 미리보기=직접, 그 외=프록시 서버
-      const url = IN_CLAUDE_PREVIEW ? DIRECT_API_URL : PROXY_API_URL;
-      const res = await fetchWithRetry(url, {
+      // 항상 Render 프록시 서버로 호출
+      const res = await fetchWithRetry(PROXY_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -426,10 +418,10 @@ ${valuesText}
       // 응답 본문을 먼저 텍스트로 받아 비-JSON(에러 페이지 등)도 처리
       const rawBody = await res.text();
 
-      // 프록시가 404로 떨어지면(서버 미실행) 안내
-      if (res.status === 404 && !IN_CLAUDE_PREVIEW) {
+      // 프록시 서버에 도달하지 못한 경우 안내
+      if (res.status === 404) {
         throw new Error(
-          "프록시 서버(/api/generate)를 찾을 수 없습니다. 백엔드 서버가 실행 중인지 확인해 주세요."
+          "프록시 서버(/api/generate)를 찾을 수 없습니다. Render 서버 주소와 라우트를 확인해 주세요."
         );
       }
 
@@ -470,9 +462,7 @@ ${valuesText}
       if (e?.name === "AbortError") {
         msg = "응답이 너무 오래 걸려 중단했습니다. 잠시 후 다시 시도해 주세요.";
       } else if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
-        msg = IN_CLAUDE_PREVIEW
-          ? "네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
-          : "서버에 연결하지 못했습니다. 프록시 서버 실행 여부와 네트워크를 확인해 주세요.";
+        msg = "서버에 연결하지 못했습니다. Render 서버가 실행 중인지 확인해 주세요.";
       }
       setError(msg);
     } finally {
