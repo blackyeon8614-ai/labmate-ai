@@ -424,7 +424,7 @@ ${valuesText}
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      text: userInput,
+      text: prompt,
     }),
   }
 );
