@@ -231,10 +231,17 @@ const REQUEST_TIMEOUT_MS = 60000;
 
 // 타임아웃이 있는 fetch
 async function fetchWithTimeout(url, options, timeout = REQUEST_TIMEOUT_MS) {
-  const PROXY_API_URL = "https://labmate-ai-wdwy.onrender.com/api/generate";
-  const timer = setTimeout(() => controller.abort(), timeout);
+  const controller = new AbortController();
+
+  const timer = setTimeout(() => {
+    controller.abort();
+  }, timeout);
+
   try {
-    return await fetch(url, { ...options, signal: controller.signal });
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
   } finally {
     clearTimeout(timer);
   }
@@ -418,6 +425,21 @@ ${valuesText}
     },
     body: JSON.stringify({
       text: userInput,
+    }),
+  }
+);
+
+const data = await res.json();
+console.log(data.report);
+const res = await fetch(
+  "https://labmate-ai-wdwy.onrender.com/api/generate",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      text: prompt,
     }),
   }
 );
