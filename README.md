@@ -5,83 +5,73 @@
 
 ---
 
-## ⚠ 이전에 스타일이 깨졌던 이유
+## 수정된 사항 (버그 픽스)
 
-이 앱의 디자인은 **Tailwind CSS** 클래스로 만들어졌습니다.
-`labmate-ai.jsx` **파일 하나만** 올리면 Tailwind 설정이 없어서 모든 디자인 클래스가
-무시되고, 글자만 세로로 쌓인 "날것" 화면이 나옵니다.
+### main.py
+1. `allow_origins` URL 끝 슬래시 제거 (`/` 있으면 CORS 불일치)
+2. `allow_methods=[""]` → `["*"]` (빈 문자열은 아무 메서드도 허용 안 함)
+3. `CORSMiddleware` 중복 import 및 `add_middleware` 중복 선언 제거
 
-이 폴더에는 Tailwind가 실제로 빌드되도록 아래 4가지가 모두 포함되어 있습니다.
-이 폴더를 **통째로** 올려야 정상 작동합니다.
+### package.json
+- `tailwindcss`, `postcss`, `autoprefixer` devDependencies에 추가
 
-1. `src/index.css` — `@tailwind base/components/utilities` 지시어
-2. `src/main.jsx` — `import "./index.css"`
-3. `tailwind.config.js` — `content` 경로 지정
-4. `postcss.config.js` — tailwindcss 플러그인 등록
-   그리고 `package.json`의 devDependencies에 `tailwindcss`, `postcss`, `autoprefixer`
+### postcss.config.js (신규)
+- Tailwind 빌드에 필요한 PostCSS 설정 추가
+
+---
+
+## 폴더 구조
+```
+labmate-ai/
+├── index.html
+├── package.json
+├── vite.config.js
+├── tailwind.config.js
+├── postcss.config.js          ← 새로 추가
+├── .env.local.example         ← 환경변수 샘플
+├── main.py                    ← 백엔드 (Render 배포)
+├── requirements.txt
+└── src/
+    ├── main.jsx
+    ├── index.css
+    └── LabMateApp.jsx
+```
 
 ---
 
 ## 로컬 실행
 
 ```bash
+# 프론트엔드
 npm install
 npm run dev        # http://localhost:5173
+
+# 백엔드 (별도 터미널)
+pip install -r requirements.txt
+ANTHROPIC_API_KEY=sk-ant-... uvicorn main:app --reload
 ```
-`npm install` 후 화면이 정상(카드·색·레이아웃 적용)으로 나오는지 먼저 확인하세요.
 
 ---
 
-## Vercel 배포
+## Render 배포 (백엔드)
 
-1. 이 폴더를 GitHub 저장소에 올립니다.
-   ```bash
-   git init
-   git add .
-   git commit -m "fix: include tailwind setup"
-   git branch -M main
-   git remote add origin https://github.com/<사용자명>/<저장소명>.git
-   git push -u origin main
-   ```
-2. vercel.com → New Project → 이 저장소 선택
-3. Framework Preset이 **Vite**로 자동 인식됩니다. (Build: `npm run build`, Output: `dist`)
-4. Deploy 클릭 → 끝.
+1. GitHub에 푸시
+2. render.com → New Web Service → 저장소 선택
+3. 설정:
+   - **Runtime**: Python
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+4. Environment Variables: `ANTHROPIC_API_KEY` = 실제 키 입력
+5. Deploy
 
-> 중요: GitHub에 올릴 때 **이 폴더 전체**(package.json, vite.config.js, tailwind.config.js,
-> postcss.config.js, src/ 전부)를 올려야 합니다. jsx 파일 하나만 올리면 또 깨집니다.
+> ⚠️ 무료 플랜은 15분 비활성 시 슬립 상태가 됩니다. 첫 요청에 30~60초 지연이 생길 수 있습니다.
 
 ---
 
-## GitHub Pages에 올릴 경우
+## Vercel 배포 (프론트엔드)
 
-Pages는 하위경로(`/저장소명/`)로 서빙되므로 `vite.config.js`에 base를 추가하세요.
-```js
-export default defineConfig({
-  base: "/저장소명/",
-  plugins: [react()],
-});
-```
-(Vercel은 루트로 서빙되므로 base 설정이 필요 없습니다.)
+1. Vercel 대시보드 → Settings → Environment Variables
+2. `VITE_API_URL` = `https://your-render-app-name.onrender.com` 추가
+3. Redeploy
 
----
-
-## 폴더 구조
-```
-labmate-vercel/
-├── index.html
-├── package.json              # tailwindcss/postcss/autoprefixer 포함
-├── vite.config.js
-├── tailwind.config.js        # content 경로
-├── postcss.config.js         # tailwindcss 플러그인
-└── src/
-    ├── main.jsx              # index.css import
-    ├── index.css             # @tailwind 지시어 + 폰트
-    └── LabMateApp.jsx        # 앱 본체(랜딩 + 보고서 생성)
-```
-
-## 보고서 생성에 대해
-이 앱은 Claude 미리보기 환경에서는 인앱 API로 동작합니다. 외부(Vercel 등)에 올렸을 때
-실제 생성을 하려면 API 키를 보관하는 백엔드가 필요합니다. 화면·입력·전환 등 UI는 모두 정상
-동작하며, 데모/실제 생성 방식이 필요하면 요청해 주세요.
-
-생성 결과는 **초안**입니다. 수치와 해석은 직접 검토 후 제출하세요.
+> ⚠️ `VITE_` 접두사가 있어야 Vite가 클라이언트에서 읽을 수 있습니다.

@@ -6,6 +6,7 @@ export default defineConfig({
 
   server: {
     proxy: {
+      // 로컬 개발 시 /api 요청을 FastAPI 서버로 프록시
       "/api": {
         target: "http://localhost:8000",
         changeOrigin: true,
