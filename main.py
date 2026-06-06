@@ -22,7 +22,7 @@ if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
 # 사용할 Gemini 모델 (무료 할당량 풍부)
-DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 
 # 프론트가 보내는 형식 그대로 받기 (Claude 호환)
