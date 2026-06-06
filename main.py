@@ -18,6 +18,9 @@ app.add_middleware(
 
 # 시작 시 한 번만 설정
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+print("API KEY EXISTS:", bool(GEMINI_API_KEY))
+
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
