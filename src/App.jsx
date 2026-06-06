@@ -429,23 +429,7 @@ ${valuesText}
   }
 );
 
-const data = await res.json();
-console.log(data.report);
-const res = await fetch(
-  "https://labmate-ai-wdwy.onrender.com/api/generate",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      text: prompt,
-    }),
-  }
-);
 
-const data = await res.json();
-console.log(data.report);
 
       // 응답 본문을 먼저 텍스트로 받아 비-JSON(에러 페이지 등)도 처리
       const rawBody = await res.text();
