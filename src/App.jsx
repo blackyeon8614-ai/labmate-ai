@@ -424,10 +424,13 @@ ${valuesText}
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      text: prompt,
-    }),
-  }
-);
+  messages: [
+    {
+      role: "user",
+      content: prompt,
+    },
+  ],
+})
 
 
 
